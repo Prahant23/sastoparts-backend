@@ -12,6 +12,9 @@ router.route('/updateUser/:id').put(authGuard,updateUserProfile);
 router.post('/create', userController.create);
 router.post('/login', userController.login);
 router.route("/forgot/password").post(userController.forgotPassword);
-router.route("/password/reset/:token").put(userController.resetPassword); //password route
+router.route("/password/reset/:token").put(userController.resetPassword); 
+router.put('/changePassword/:userId', userController.changePassword);
+
+ //password route
 
 module.exports = router;

@@ -1,12 +1,13 @@
-// importing 
-const router = require('express').Router();
-//making router
-const productControllers = require('../controllers/productControllers.js');
-const { authGuardAdmin, authGuard } = require('../middleware/authGuard.js');
+const express = require('express');
+const router = express.Router();
+const productControllers = require('../controllers/productControllers');
+const { authGuardAdmin, authGuard } = require('../middleware/authGuard');
 
-// exporting router
-router.post('/createProduct',authGuardAdmin,productControllers.createProduct);
-router.get('/getProduct',productControllers.getProducts);
-router.get('/getProductByUserId/:userId',authGuard,productControllers.getSingleProduct); //single product routes
-router.delete('/deleteProduct/:productId', authGuard, productControllers.deleteProduct);//deleteroute for products
+router.post('/createProduct', authGuardAdmin, productControllers.createProduct);
+router.get('/getProduct', productControllers.getProducts);
+router.get('/getProductByUserId/:userId', authGuard, productControllers.getSingleProduct); // Consider renaming this to avoid confusion
+router.get('/get_product/:id', productControllers.getSingleProduct); // Route for fetching a single product
+router.put('/update_product/:id', authGuardAdmin, productControllers.updateProduct); // Route for updating a product
+router.delete('/deleteproduct/:id', authGuardAdmin, productControllers.deleteProduct); // Route for deleting a product
+
 module.exports = router;

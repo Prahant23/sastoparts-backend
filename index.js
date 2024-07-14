@@ -1,11 +1,11 @@
-// importing Packages
 const express = require('express');
 const dotenv = require('dotenv');
 const connectToDB = require('./database/db');
 const cors = require('cors');
-const cloudinary = require('cloudinary').v2; // Ensure you have the correct cloudinary version
+const cloudinary = require('cloudinary').v2;
 const acceptMultimedia = require('connect-multiparty');
 const bookingRoutes = require('./routes/bookingRoutes');
+const orderRoutes = require ('./routes/orderRoutes');
 
 // creating an express app
 const app = express();
@@ -40,13 +40,13 @@ app.use(express.json());
 
 // Importing routes
 app.use('/api/user', require('./routes/userRoutes'));
-app.use('/api/product', require('./routes/productRoutes'));
-app.use('/api/cart', require('./routes/cartRoutes')); // cart routes updated
-app.use('/api/order', require('./routes/orderRoutes'));
-app.use('/api/bookings', bookingRoutes); // updated to follow API route pattern
+app.use('/api/product', require('./routes/productRoutes')); // corrected to match route prefix
+app.use('/api/cart', require('./routes/cartRoutes')); 
+app.use('/api/order', orderRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 // Defining port
-const PORT = process.env.PORT || 5000; // Fallback to 5000 if PORT is not defined
+const PORT = process.env.PORT || 5000;
 
 // running the server on port 5000
 app.listen(PORT, () => {

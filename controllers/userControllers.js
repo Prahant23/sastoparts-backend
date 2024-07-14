@@ -1,4 +1,5 @@
 const Users = require("../model/userModel.js");
+const bcrypt = require('bcrypt');
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
@@ -110,7 +111,7 @@ const forgotPassword = async (req, res) => {
     await user.save();
 
     // Assuming you have a configuration variable for the frontend URL
-    const frontendBaseUrl = process.env.FRONTEND_BASE_URL || "http://localhost:3000";
+    const frontendBaseUrl = process.env.FRONTEND_BASE_URL || "http://localhost:4000";
     const resetUrl = `${frontendBaseUrl}/password/reset/${resetPasswordToken}`;
 
     const message = `Reset Your Password by clicking on the link below: \n\n ${resetUrl}`;
@@ -256,7 +257,35 @@ const updateUserProfile = async (req, res) => {
     });
   }
 };
+const changePassword = async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    const { userId } = req.params;
+    const user = await Users.findById(userId);  
 
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    // Update the user's password directly (without bcrypt)
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password changed successfully.",
+    });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+};
 
 
 
@@ -266,7 +295,6 @@ module.exports = {
   forgotPassword,
   resetPassword,
   updateUserProfile,
-  getUsers
-  
-
+  getUsers,
+  changePassword
 };

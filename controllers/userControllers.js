@@ -11,7 +11,7 @@ const User = require("../model/userModel.js");
 const create = async (req, res) => {
   console.log(req.body);
 
-  const { firstName, email, password, lastName } = req.body;
+  const { firstName, email, password, lastName ,contactNumber,address} = req.body;
 
   if (!firstName || !email || !password || !lastName) {
     return res.status(400).json({ message: "Please fill all required fields" });
@@ -30,7 +30,9 @@ const create = async (req, res) => {
       firstName: firstName,
       lastName: lastName,
       email: email,
-      password: password, // Note: This is not secure, use a secure way to store passwords
+      password: password, 
+      contactNumber:contactNumber,
+      address: address// Note: This is not secure, use a secure way to store passwords
     });
 
     await newUser.save();
@@ -209,54 +211,46 @@ const getUsers = async (req, res) => {
     });
   }  
 }
-const updateUserProfile = async (req, res) => {
+const updateUser = async (req, res) => {
+  const { firstName, lastName, email, contactNumber, address } = req.body;
+  const userId = req.params.id;
+
+  if (!userId) {
+    return res.status(400).json({ success: false, message: "User ID is required" });
+  }
+
   try {
-    const userId = req.params.id || req.user.id;
-    console.log(userId, 'this is user id')
+    // Find the user by ID
     const user = await Users.findById(userId);
+
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found.',
-      });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    let avatarUrl = null;
-    if (typeof req.body.avatar !== 'string') {
-      const { avatar } = req.files;
-      console.log(avatar)
-      const uploadedAvatar = await cloudinary.uploader.upload(avatar.path, { folder: 'avatars' });
-      if (!uploadedAvatar || !uploadedAvatar.secure_url) {
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to upload avatar to Cloudinary',
-        });
-      }
-      avatarUrl = uploadedAvatar.secure_url;
-    } else {
-      avatarUrl = req.body.avatar;
-    }
-    const updateData = {
-      ...req.body,
-      avatar:avatarUrl
-    }
-    console.log('updateData: ', updateData);
+    // Update user details
+    if (firstName) user.firstName = firstName;
+    if (lastName) user.lastName = lastName;
+    if (email) user.email = email;
+    if (contactNumber) user.contactNumber = contactNumber;
+    if (address) user.address = address;
 
-    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {new:true})
-    console.log('updatedUser: ', updatedUser);
+    // Save the updated user
+    await user.save();
+
     res.status(200).json({
       success: true,
-      message: 'User profile updated successfully.',
-      user: updatedUser,
+      message: "User updated successfully",
+      user,
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error updating user:', error);
     res.status(500).json({
       success: false,
-      message: 'Server Error',
+      message: "Internal server error",
     });
   }
 };
+
 const changePassword = async (req, res) => {
   try {
     const { newPassword } = req.body;
@@ -294,7 +288,7 @@ module.exports = {
   login,
   forgotPassword,
   resetPassword,
-  updateUserProfile,
   getUsers,
-  changePassword
+  changePassword,
+  updateUser
 };

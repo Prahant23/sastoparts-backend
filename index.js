@@ -6,6 +6,7 @@ const cloudinary = require('cloudinary').v2;
 const acceptMultimedia = require('connect-multiparty');
 const bookingRoutes = require('./routes/bookingRoutes');
 const orderRoutes = require ('./routes/orderRoutes');
+const shippingRoutes = require('./routes/shippingRoutes');
 
 // creating an express app
 const app = express();
@@ -42,8 +43,9 @@ app.use(express.json());
 app.use('/api/user', require('./routes/userRoutes'));
 app.use('/api/product', require('./routes/productRoutes')); // corrected to match route prefix
 app.use('/api/cart', require('./routes/cartRoutes')); 
-app.use('/api/order', orderRoutes);
+app.use('/api/createorder', orderRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/shipping', require('./routes/shippingRoutes'));
 
 // Defining port
 const PORT = process.env.PORT || 5000;

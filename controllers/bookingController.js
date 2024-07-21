@@ -38,6 +38,14 @@ exports.getBooking = async (req, res) => {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };
+exports.getBookingsByUser = async (req, res) => {
+    try {
+        const bookings = await Booking.find({ userId: req.params.userId });
+        res.status(200).json(bookings);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
 
 exports.updateBooking = async (req, res) => {
     try {

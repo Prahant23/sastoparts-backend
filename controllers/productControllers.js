@@ -1,15 +1,22 @@
-const Products = require("../model/productModel");
 const User = require("../model/userModel");
 const cloudinary = require("cloudinary").v2; // Ensure correct import of cloudinary
+const Products = require("../model/productModel");
 
 // Create product
 const createProduct = async (req, res) => {
   // Destructure incoming data
-  const { productName, productPrice, productCategory, productDescription } = req.body;
+  const { productName, productPrice, productCategory, productDescription } =
+    req.body;
   const { productImage } = req.files;
 
   // Validate data
-  if (!productName || !productPrice || !productCategory || !productDescription || !productImage) {
+  if (
+    !productName ||
+    !productPrice ||
+    !productCategory ||
+    !productDescription ||
+    !productImage
+  ) {
     return res.status(400).json({
       success: false,
       message: "Please enter all fields",
@@ -20,7 +27,7 @@ const createProduct = async (req, res) => {
     // Upload image to Cloudinary
     const uploadedImage = await cloudinary.uploader.upload(productImage.path, {
       folder: "products",
-      crop: "scale"
+      crop: "scale",
     });
 
     // Save to database
@@ -93,9 +100,16 @@ const getSingleProduct = async (req, res) => {
 // Delete product
 const deleteProduct = async (req, res) => {
   try {
-    const productId = req.params.id; // Ensure the parameter name matches
-    const product = await Products.findById(productId);
+    const productId = req.params.id; // Get the product ID from request parameters
+    console.log(productId);
+    if (!productId) {
+      return res.status(400).json({
+        success: false,
+        message: "Product ID is required.",
+      });
+    }
 
+    const product = await Products.findById(productId);
     if (!product) {
       return res.status(404).json({
         success: false,
@@ -104,25 +118,7 @@ const deleteProduct = async (req, res) => {
     }
 
     // Ensure the user's ID is available from authentication
-    const userId = req.user.id;
-    if (userId.toString() !== product.owner.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: "You do not have permission to delete this product.",
-      });
-    }
-
-    // Delete the product image from Cloudinary
-    const publicId = product.productImage.split('/').pop().split('.')[0];
-    await cloudinary.uploader.destroy(`products/${publicId}`);
-
-    // Delete the product from the database
     await Products.findByIdAndDelete(productId);
-
-    // Remove the product ID from the user's products array
-    const user = await User.findById(userId);
-    user.product = user.product.filter((id) => id.toString() !== productId.toString());
-    await user.save();
 
     res.json({
       success: true,
@@ -130,17 +126,19 @@ const deleteProduct = async (req, res) => {
       deletedProduct: product,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error deleting product:", error);
     res.status(500).json({
       success: false,
       message: "Server Error",
     });
   }
 };
+
 // Update product
 const updateProduct = async (req, res) => {
   const productId = req.params.id;
-  const { productName, productPrice, productCategory, productDescription } = req.body;
+  const { productName, productPrice, productCategory, productDescription } =
+    req.body;
 
   try {
     const product = await Products.findById(productId);
@@ -162,12 +160,12 @@ const updateProduct = async (req, res) => {
     if (req.files && req.files.productImage) {
       const productImage = req.files.productImage.path;
       // Delete old image from cloudinary
-      const publicId = product.productImage.split('/').pop().split('.')[0];
+      const publicId = product.productImage.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(`products/${publicId}`);
       // Upload new image
       const uploadedImage = await cloudinary.uploader.upload(productImage, {
         folder: "products",
-        crop: "scale"
+        crop: "scale",
       });
       product.productImage = uploadedImage.secure_url;
     }
@@ -187,6 +185,10 @@ const updateProduct = async (req, res) => {
   }
 };
 
-
-module.exports = { createProduct, getProducts, getSingleProduct, deleteProduct,updateProduct };
-  
+module.exports = {
+  createProduct,
+  getProducts,
+  getSingleProduct,
+  deleteProduct,
+  updateProduct,
+};

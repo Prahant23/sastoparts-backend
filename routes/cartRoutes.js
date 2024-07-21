@@ -12,6 +12,7 @@ router.route('/addtocart').post(auth.authGuard, cartController.addtocart); //add
 router.route('/').get(auth.authGuard, cartController.getCartItems); //route
 // DELETE request to delete a cart item by ID
 router.delete('/delete/:id', cartController.deleteCartItem);//delete routes for cart
+router.get('/:id',cartController.getCartByUserID);
 
 
 

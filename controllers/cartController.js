@@ -73,24 +73,39 @@ const addtocart = async (req, res) => {
 
 const getCartItems = async (req, res) => {
   try {
-    const cartItems = await CartItem.find({userId: req.user.userId});
+    const userId = req.user.userId; // Ensure this is correctly extracted
+    const cartItems = await CartItem.find({ userId });
+
+    if (!cartItems.length) {
+      return res.status(404).json({ message: 'No items found in cart' });
+    }
+
     let cart = [];
-    for(let i=0; i<cartItems.length; i++) {
+    for (let i = 0; i < cartItems.length; i++) {
       let cartItem = cartItems[i];
       let product = await Products.findById(cartItem.productId);
+
+      if (!product) {
+        continue; // Skip items with missing products
+      }
+
       let item = {
         _id: cartItem._id,
         productImg: product.productImage,
         productName: product.productName,
-        productPrice: product.productPrice
+        productPrice: product.productPrice,
+        quantity: cartItem.quantity // Include quantity
       };
-      cart.push(item)
+      cart.push(item);
     }
-    return res.json({message: 'success', cart})
+
+    return res.json({ message: 'success', cart });
   } catch (error) {
-    
+    console.error('Error fetching cart items:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-}
+};
+
 const deleteCartItem = async (req, res) => {
   try {
     const cartItemId = req.params.id;
@@ -104,9 +119,33 @@ const deleteCartItem = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+const getCartByUserID = async (req, res) => {
+  try {
+    const userId = req.params.userId;
 
+    const cartItems = await CartItem.find({ userId });
+    let cart = [];
+    for (let i = 0; i < cartItems.length; i++) {
+      let cartItem = cartItems[i];
+      let product = await Products.findById(cartItem.productId);
+      let item = {
+        _id: cartItem._id,
+        productImg: product.productImage,
+        productName: product.productName,
+        productPrice: product.productPrice,
+        quantity: cartItem.quantity
+      };
+      cart.push(item);
+    }
+    return res.json({ message: 'success', cart });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 module.exports = {
   addtocart,
   getCartItems,
-  deleteCartItem
+  deleteCartItem,
+  getCartByUserID
 };

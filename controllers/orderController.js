@@ -119,46 +119,34 @@ const getAllOrders = async (req, res) => {
 
 
 
-const updateOrderStatus = async (req, res) => {
-    const { orderStatus } = req.body;
-    const id = req.params.id;
+// OrderController.js
+// const updateOrderStatus = async (req, res) => {
+//     try {
+//         const { status } = req.body;
+//         const { id } = req.params;
+//         const validStatuses = ['approved', 'unavailable', 'pending'];
 
-    // Check if orderStatus is provided
-    if (!orderStatus) {
-        return res.json({
-            success: false,
-            message: "orderStatus is required!"
-        });
-    }
+//         if (!validStatuses.includes(status)) {
+//             return res.status(400).json({ success: false, message: 'Invalid status' });
+//         }
 
-    try {
-        // Find the order by ID and update the orderStatus field
-        const updatedOrder = await Order.findByIdAndUpdate(
-            id,
-            { orderStatus: orderStatus },
-            { new: true }
-        );
+//         const order = await Order.findById(id);
+//         if (!order) {
+//             return res.status(404).json({ success: false, message: 'Order not found' });
+//         }
 
-        if (!updatedOrder) {
-            return res.status(404).json({
-                success: false,
-                message: "Order not found!"
-            });
-        }
+//         order.orderStatus = status;
+//         await order.save();
 
-        res.json({
-            success: true,
-            message: "Order status updated successfully",
-            order: updatedOrder
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: "Server Error"
-        });
-    }
-};
+//         res.json({ success: true, message: 'Order status updated successfully' });
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ success: false, message: 'Server Error' });
+//     }
+// };
+
+// Route
+
 
 const cancelOrder = async (req, res) => {
     const id = req.params.id;
@@ -214,6 +202,31 @@ const updateReturnStatus = async (req, res) => {
       res.status(500).json({ success: false, message: "Server Error" });
     }
   };
+  const updateOrderStatus = async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        const { status } = req.body; // Adjust if you are using `returnStatus` instead
+
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        // Update the order status
+        order.orderStatus = status;
+        await order.save();
+
+        return res.json({
+            success: true,
+            message: "Order status updated successfully",
+            order,
+        });
+    } catch (error) {
+        console.error("Error updating order status:", error);
+        res.status(500).json({ success: false, message: "Server Error" });
+    }
+};
+
 module.exports = {
     createOrder,
     getSingleOrder,

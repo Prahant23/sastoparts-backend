@@ -1,95 +1,113 @@
-const Order = require("../model/orderModel");
-const cloudinary = require("cloudinary");
+// controllers/orderController.js
+const Order = require('../model/orderModel');
+const cloudinary = require('cloudinary');
+
+// Create a new order
 const createOrder = async (req, res) => {
-  const { userID, cartItems, shippingID, totalPayment, paymentMethod } = req.body;
-  console.log(req.body)
+    const { userID, cartItems, totalPayment, paymentMethod } = req.body;
 
-  if (!userID || !cartItems ||  !totalPayment || !paymentMethod) {
-      return res.json({
-          success: false,
-          message: "Please fill all the fields"
-      });
-  }
+    if (!userID || !cartItems || !totalPayment || !paymentMethod) {
+        return res.status(400).json({
+            success: false,
+            message: 'Please fill all the required fields.'
+        });
+    }
 
-  try {
-      const newOrder = new Order({
-          userID,
-          cartItems,
-          totalPayment,
-          paymentMethod,
-      });
+    try {
+        const newOrder = new Order({
+            userID,
+            cartItems,
+            totalPayment,
+            paymentMethod,
+        });
 
-      await newOrder.save();
+        await newOrder.save();
 
-      res.status(200).json({
-          success: true,
-          message: "Your order has been created.",
-          data: newOrder
-      });
-  } catch (error) {
-      console.error('Error creating order:', error);
-      res.status(500).json({
-          success: false,
-          message: "Server Error"
-      });
-  }
+        res.status(201).json({
+            success: true,
+            message: 'Your order has been created successfully.',
+            data: newOrder
+        });
+    } catch (error) {
+        console.error('Error creating order:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
 };
 
+// Get a single order by ID
 const getSingleOrder = async (req, res) => {
     const id = req.params.id;
+
     if (!id) {
-        return res.json({
+        return res.status(400).json({
             success: false,
-            message: "Order id is required!"
-        })
+            message: 'Order ID is required!'
+        });
     }
+
     try {
         const singleOrder = await Order.findById(id);
-        res.json({
+        if (!singleOrder) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+        res.status(200).json({
             success: true,
-            message: "Order fetched successfully",
+            message: 'Order fetched successfully',
             order: singleOrder
-        })
-
+        });
     } catch (error) {
-        console.log(error);
-        res.status(500).json("Server Error")
-
+        console.error('Error fetching order:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
     }
-}
+};
 
+// Get orders by user ID
 const getOrderByUserID = async (req, res) => {
     const id = req.params.id;
+
     try {
         const orders = await Order.find({ userID: id }).populate({
-            path: 'cartItems.cartID',  // Populate CartItem
+            path: 'cartItems.cartID',
             select: 'productId quantity',
             populate: {
-                path: 'productId',  // Populate Product within CartItem
+                path: 'productId',
                 select: 'itemName itemPrice itemImage quantity'
             }
         }).exec();
 
-        res.json({
-            message: "Orders retrieved",
+        res.status(200).json({
             success: true,
-            orders: orders,
+            message: 'Orders retrieved successfully',
+            orders
         });
     } catch (error) {
-        console.error(error);
+        console.error('Error retrieving orders:', error);
         res.status(500).json({
-            message: "Error retrieving orders",
             success: false,
+            message: 'Server Error',
+            error: error.message
         });
     }
 };
 
+// Get all orders
 const getAllOrders = async (req, res) => {
     try {
         const listOfOrders = await Order.find().populate({
             path: 'cartItems.cartID',
-            model: 'Cart',
-            select: 'itemID  totalPrice cartQuantity',
+            model: 'CartItem',
+            select: 'itemID totalPrice cartQuantity',
             populate: {
                 path: 'itemID',
                 model: 'Item',
@@ -98,132 +116,114 @@ const getAllOrders = async (req, res) => {
         }).populate({
             path: 'shippingID',
             model: 'ShippingInfo',
-            select: 'firstName lastName contactNumber address specificRequirements pickUpDate ReturnDate'
-        })
-        .exec();
+            select: 'firstName lastName contactNumber address specificRequirements pickUpDate returnDate'
+        }).exec();
 
-        res.json({
+        res.status(200).json({
             success: true,
-            message: "Orders fetched successfully",
+            message: 'Orders fetched successfully',
             orders: listOfOrders,
-            count: listOfOrders.length,
+            count: listOfOrders.length
         });
     } catch (error) {
-        console.error(error);
+        console.error('Error fetching orders:', error);
         res.status(500).json({
             success: false,
-            message: "Server Error",
+            message: 'Server Error',
+            error: error.message
         });
     }
 };
 
+// Update the status of an order
+const updateOrderStatus = async (req, res) => {
+    const orderId = req.params.id;
+    const { status } = req.body;
 
-
-// OrderController.js
-// const updateOrderStatus = async (req, res) => {
-//     try {
-//         const { status } = req.body;
-//         const { id } = req.params;
-//         const validStatuses = ['approved', 'unavailable', 'pending'];
-
-//         if (!validStatuses.includes(status)) {
-//             return res.status(400).json({ success: false, message: 'Invalid status' });
-//         }
-
-//         const order = await Order.findById(id);
-//         if (!order) {
-//             return res.status(404).json({ success: false, message: 'Order not found' });
-//         }
-
-//         order.orderStatus = status;
-//         await order.save();
-
-//         res.json({ success: true, message: 'Order status updated successfully' });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ success: false, message: 'Server Error' });
-//     }
-// };
-
-// Route
-
-
-const cancelOrder = async (req, res) => {
-    const id = req.params.id;
     try {
-        const canceledOrder = await Order.findByIdAndDelete(id);
-        if (!canceledOrder) {
-            return res.json({
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return res.status(404).json({
                 success: false,
-                message: "Order not found",
+                message: 'Order not found'
             });
         }
 
-        res.json({
-            success: true,
-            message: "Order canceled successfully",
-            data: canceledOrder,
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error",
-        });
-    }
-};
-const updateReturnStatus = async (req, res) => {
-    try {
-      const orderId = req.params.id;
-      const { returnStatus } = req.body;
-  
-      console.log(orderId);
-      console.log(returnStatus);
-  
-      // Check if the bluebook with the given ID exists
-      const order = await Order.findById(orderId);
-      if (!order) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Order not found" });
-      }
-  
-      // Update the bluebook status
-     order.returnStatus = returnStatus;
-      await order.save();
-  
-      return res.json({
-        success: true,
-        message: "Order status updated successfully",
-        order,
-      });
-    } catch (error) {
-      console.error("Error updating return status:", error);
-      res.status(500).json({ success: false, message: "Server Error" });
-    }
-  };
-  const updateOrderStatus = async (req, res) => {
-    try {
-        const orderId = req.params.id;
-        const { status } = req.body; // Adjust if you are using `returnStatus` instead
-
-        const order = await Order.findById(orderId);
-        if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found" });
-        }
-
-        // Update the order status
         order.orderStatus = status;
         await order.save();
 
-        return res.json({
+        res.status(200).json({
             success: true,
-            message: "Order status updated successfully",
-            order,
+            message: 'Order status updated successfully',
+            order
         });
     } catch (error) {
-        console.error("Error updating order status:", error);
-        res.status(500).json({ success: false, message: "Server Error" });
+        console.error('Error updating order status:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
+// Update the return status of an order
+const updateReturnStatus = async (req, res) => {
+    const orderId = req.params.id;
+    const { returnStatus } = req.body;
+
+    try {
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+
+        order.returnStatus = returnStatus;
+        await order.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Return status updated successfully',
+            order
+        });
+    } catch (error) {
+        console.error('Error updating return status:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
+// Cancel an order
+const cancelOrder = async (req, res) => {
+    const id = req.params.id;
+
+    try {
+        const canceledOrder = await Order.findByIdAndDelete(id);
+        if (!canceledOrder) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Order canceled successfully',
+            data: canceledOrder
+        });
+    } catch (error) {
+        console.error('Error canceling order:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+            error: error.message
+        });
     }
 };
 
@@ -233,5 +233,6 @@ module.exports = {
     getOrderByUserID,
     getAllOrders,
     updateOrderStatus,
-    cancelOrder, updateReturnStatus
+    cancelOrder,
+    updateReturnStatus
 };

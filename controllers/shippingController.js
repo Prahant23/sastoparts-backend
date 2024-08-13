@@ -1,5 +1,4 @@
-// controllers/shippingController.js
-const Shipping = require('../model/shippingmode');
+const Shipping = require('../model/shippingmodel'); // Ensure correct path and filename
 
 // Create a new shipping address
 exports.createShippingAddress = async (req, res) => {
@@ -16,7 +15,7 @@ exports.createShippingAddress = async (req, res) => {
         });
 
         const savedShipping = await shipping.save();
-        res.json({ success: true, data: savedShipping, message:"shipping created successfully!!" });
+        res.status(201).json({ success: true, data: savedShipping, message: "Shipping address created successfully!" });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }

@@ -8,7 +8,8 @@ const cartItemSchema = new mongoose.Schema({
   },
   quantity: {
     type: Number,
-    required: true
+    required: true,
+    min: 1
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,

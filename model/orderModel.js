@@ -1,3 +1,4 @@
+// models/orderModel.js
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
@@ -10,10 +11,11 @@ const orderSchema = new Schema({
     cartItems: [{
         cartID: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'CartItem',  // Ensure this reference matches the model name
+            ref: 'CartItem',
             required: true,
         }
     }],
+    // Optional: Add the shippingID field if needed
     // shippingID: {
     //     type: mongoose.Schema.Types.ObjectId,
     //     ref: 'ShippingInfo',
@@ -31,12 +33,12 @@ const orderSchema = new Schema({
     orderStatus: {
         type: String,
         required: true,
-        default: "pending",
+        default: 'pending',
     },
     returnStatus: {
         type: String,
         required: true,
-        default: "Not Returned",
+        default: 'Not Returned',
     },
     createdAt: {
         type: Date,
